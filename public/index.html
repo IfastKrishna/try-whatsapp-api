@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <title>WhatsApp Web Integration</title>
+
+  <script>
+    let statusInterval;
+
+    async function fetchStatus() {
+      const status = document.getElementById('status');
+      const qrImage = document.getElementById('qr-image');
+      const retryButton = document.getElementById('retry-button');
+      const logoutButton = document.getElementById('logout-button');
+
+      try {
+        const response = await fetch('/api/status');
+        const data = await response.json();
+
+        if (data.status === 'success') {
+          status.innerHTML = '<span class="text-green-500 font-bold">WhatsApp is ready!</span>';
+          qrImage.style.display = 'none';
+          retryButton.style.display = 'none';
+          logoutButton.style.display = 'block';
+        } else if (data.status === 'waiting' && data.qr) {
+          status.innerHTML = '<span class="text-yellow-500 font-bold">Scan the QR code with WhatsApp.</span>';
+          qrImage.src = data.qr;
+          qrImage.style.display = 'block';
+          retryButton.style.display = 'none';
+          logoutButton.style.display = 'none';
+        } else {
+          status.innerHTML = `<span class="text-red-500 font-bold">${data.message || 'Client is disconnected.'}</span>`;
+          qrImage.style.display = 'none';
+          retryButton.style.display = 'block';
+          logoutButton.style.display = 'none';
+        }
+      } catch (error) {
+        status.innerHTML = '<span class="text-red-500 font-bold">Failed to fetch status.</span>';
+        retryButton.style.display = 'block';
+        logoutButton.style.display = 'none';
+      }
+    }
+
+    function startStatusCheck() {
+      fetchStatus();
+      if (statusInterval) clearInterval(statusInterval);
+      statusInterval = setInterval(fetchStatus, 5000); // Update every 5 seconds
+    }
+
+    async function logout() {
+      const status = document.getElementById('status');
+      status.innerHTML = '<span class="text-yellow-500 font-bold">Logging out...</span>';
+      try {
+        await fetch('/api/logout', { method: 'POST' });
+        status.innerHTML = '<span class="text-green-500 font-bold">Logged out successfully. Please scan the QR code.</span>';
+        startStatusCheck(); // Restart status checking
+      } catch (error) {
+        status.innerHTML = '<span class="text-red-500 font-bold">Failed to log out. Try again.</span>';
+      }
+    }
+
+    window.onload = startStatusCheck;
+  </script>
+</head>
+<body class="bg-gray-100 h-screen flex items-center justify-center">
+  <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
+    <h1 class="text-center text-3xl font-semibold mb-4">WhatsApp Web Integration</h1>
+    <p id="status" class="text-center my-2">Loading...</p>
+    <img id="qr-image" alt="QR Code" style="display:none;" class="w-full" />
+    <div class="flex justify-center mt-4">
+      <button id="logout-button" class="px-8 py-2 bg-red-500 text-white rounded-lg font-bold" onclick="logout()" style="display:none;">Logout</button>
+      <button id="retry-button" class="px-8 py-2 bg-blue-500 text-white rounded-lg font-bold ml-4" onclick="startStatusCheck()" style="display:none;">Retry</button>
+    </div>
+  </div>
+</body>
+</html>
