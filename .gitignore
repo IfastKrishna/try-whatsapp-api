@@ -1,3 +1,4 @@
 /node_modules
-/.wwwbjs_auth
-/.wwwbjs_cache
+/wwwbjs_auth
+/wwwbjs_cache
+.vercel

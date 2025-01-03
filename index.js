@@ -18,8 +18,8 @@ let clientReady = false;
 
 // Middleware to validate API key
 const validateApiKey = (req, res, next) => {
-  const apiKey = req.headers["x-api-key"];
-  if (apiKey && apiKey === process.env.APIKEY) {
+  const apiKey = req.headers["authorization"];
+  if (apiKey && apiKey === `${process.env.APIKEY}`) {
     next(); // Valid API key, proceed to the next middleware or route handler
   } else {
     res
@@ -179,6 +179,6 @@ app.post("/api/logout", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+app.listen(port, "0.0.0.0", () => {
   console.log(`Server running on port ${port}`);
 });
